@@ -9,10 +9,24 @@ pool:
 steps:
   - powershell: |
       # Install Terraform
-      Invoke-WebRequest -Uri https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_windows_386.zip -OutFile terraform.zip
-      Expand-Archive -Path terraform.zip -DestinationPath $Env:TEMP
-      Move-Item -Path "$Env:TEMP\terraform.exe" -Destination "C:\terraform\terraform.exe"
-      $env:Path += ";C:\terraform"
+      $terraformUrl = "https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_windows_386.zip"
+      $terraformZip = "$Env:TEMP\terraform.zip"
+      $terraformExe = "$Env:TEMP\terraform.exe"
+      $destinationPath = "C:\terraform"
+
+      Invoke-WebRequest -Uri $terraformUrl -OutFile $terraformZip
+      Expand-Archive -Path $terraformZip -DestinationPath $Env:TEMP
+
+      # Ensure the destination directory exists
+      if (-Not (Test-Path -Path $destinationPath)) {
+        New-Item -ItemType Directory -Path $destinationPath
+      }
+
+      # Move terraform.exe to the destination path
+      Move-Item -Path $terraformExe -Destination $destinationPath
+
+      # Add the destination path to the system path
+      $env:Path += ";$destinationPath"
     displayName: 'Install Terraform'
 
   - powershell: terraform version
