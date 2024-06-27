@@ -1,21 +1,25 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- master
+  branches:
+    include:
+      - master
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'windows-latest'
 
 steps:
-  - task: TerraformInstaller@0
-    inputs:
-      terraformVersion: '1.8.5'  # Update this to your Terraform version
+  - powershell: |
+      # Install Terraform
+      Invoke-WebRequest -Uri https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_windows_386.zip -OutFile terraform.zip
+      Expand-Archive -Path terraform.zip -DestinationPath $Env:TEMP
+      Move-Item -Path "$Env:TEMP\terraform.exe" -Destination "C:\terraform\terraform.exe"
+      $env:Path += ";C:\terraform"
+    displayName: 'Install Terraform'
 
-  - script: terraform init
+  - powershell: terraform version
+    displayName: 'Verify Terraform Installation'
+
+  - powershell: terraform init
     displayName: 'Terraform Init'
 
-  - script: terraform validate
+  - powershell: terraform validate
     displayName: 'Terraform Validate'
