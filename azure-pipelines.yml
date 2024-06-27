@@ -23,17 +23,29 @@ steps:
       }
 
       # Move terraform.exe to the destination path
-      Move-Item -Path $terraformExe -Destination $destinationPath
+      Move-Item -Path "$Env:TEMP\terraform.exe" -Destination $destinationPath
+
+      # Verify the file has been moved
+      Get-ChildItem $destinationPath
 
       # Add the destination path to the system path
-      $env:Path += ";$destinationPath"
+      [System.Environment]::SetEnvironmentVariable('PATH', $env:Path + ";$destinationPath", [System.EnvironmentVariableTarget]::Process)
+
+      # Verify the system path
+      $env:Path
     displayName: 'Install Terraform'
 
-  - powershell: terraform version
+  - powershell: |
+      # Verify Terraform Installation
+      terraform version
     displayName: 'Verify Terraform Installation'
 
-  - powershell: terraform init
+  - powershell: |
+      # Initialize Terraform
+      terraform init
     displayName: 'Terraform Init'
 
-  - powershell: terraform validate
+  - powershell: |
+      # Validate Terraform configuration
+      terraform validate
     displayName: 'Terraform Validate'
