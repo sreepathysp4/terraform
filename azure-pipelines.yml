@@ -1,0 +1,51 @@
+trigger:
+  branches:
+    include:
+      - master
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - powershell: |
+      # Install Terraform
+      $terraformUrl = "https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_windows_386.zip"
+      $terraformZip = "$Env:TEMP\terraform.zip"
+      $terraformExe = "$Env:TEMP\terraform.exe"
+      $destinationPath = "C:\terraform"
+
+      Invoke-WebRequest -Uri $terraformUrl -OutFile $terraformZip
+      Expand-Archive -Path $terraformZip -DestinationPath $Env:TEMP
+
+      # Ensure the destination directory exists
+      if (-Not (Test-Path -Path $destinationPath)) {
+        New-Item -ItemType Directory -Path $destinationPath
+      }
+
+      # Move terraform.exe to the destination path
+      Move-Item -Path "$Env:TEMP\terraform.exe" -Destination $destinationPath
+
+      # Verify the file has been moved
+      Get-ChildItem $destinationPath
+
+      # Add the destination path to the system path
+      [System.Environment]::SetEnvironmentVariable('PATH', $env:Path + ";$destinationPath", [System.EnvironmentVariableTarget]::Process)
+
+      # Verify the system path
+      $env:Path
+    displayName: 'Install Terraform'
+
+  - powershell: |
+      # Verify Terraform Installation
+      terraform version
+    displayName: 'Verify Terraform Installation'
+
+  - powershell: |
+      # Initialize Terraform
+      terraform init
+    displayName: 'Terraform Init'
+
+  - powershell: |
+      # Validate Terraform configuration
+      terraform validate
+    displayName: 'Terraform Validate'
